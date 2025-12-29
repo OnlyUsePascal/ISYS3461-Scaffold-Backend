@@ -1,0 +1,67 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URI}
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      metrics:
+        enabled: true
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+        - id: alpha
+          uri: lb://alpha
+          predicates:
+            - Path=${server.servlet.context-path}/alpha/**
+          filters:
+            - StripPrefix=2
+
+        - id: alpha-docs
+          uri: lb://alpha
+          predicates:
+            - Path=/v3/api-docs/alpha
+          filters:
+            - RewritePath=/v3/api-docs/alpha, /v3/api-docs
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: alpha
+        url: /v3/api-docs/alpha
+
+management:
+  endpoint:
+    gateway:
+      access: unrestricted
+
+  endpoints:
+    web:
+      exposure:
+        include:
+          - gateway
+
+# logging:
+#   level:
+#     "[org.springframework.cloud.gateway.handler]": DEBUG
+#     "[io.netty.handler.codec.http.websocketx]": DEBUG
+
+key-store:
+  type: PKCS12
+  path: classpath:${KEYSTORE_FILENAME}
+  password: ${KEYSTORE_PWD}
+  alias:
+    jwe: ${KEYSTORE_ALIAS_JWE}
