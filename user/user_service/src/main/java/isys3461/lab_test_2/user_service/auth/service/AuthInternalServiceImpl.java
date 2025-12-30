@@ -17,6 +17,8 @@ import isys3461.lab_test_2.user_api.internal.service.AuthInternalService;
 import isys3461.lab_test_2.user_api.internal.service.UserInternalService;
 import isys3461.lab_test_2.user_service.auth.model.AuthModel;
 import isys3461.lab_test_2.user_service.auth.repo.AuthRepo;
+import isys3461.lab_test_2.user_service.common.util.JwtService;
+import isys3461.lab_test_2.user_service.common.util.dto.CreateTokenDto.CreateJwsTokenReq;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -32,6 +34,9 @@ public class AuthInternalServiceImpl implements AuthInternalService {
   @Autowired
   private EventProducer eventProducer;
 
+  @Autowired
+  private JwtService jwtService;
+
   @Override
   public SignInRes signIn(SignInReq req) {
     var user = authRepo
@@ -39,13 +44,20 @@ public class AuthInternalServiceImpl implements AuthInternalService {
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND, "user not found with username" + req.username()));
 
+    // password hash
     if (!user.getPassword().equals(req.password())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "wrong password");
     }
 
-    return new SignInRes(
-        "access token",
-        "refresh token");
+    // jwt
+    try {
+      var token = jwtService.createJwsToken(
+          new CreateJwsTokenReq(user.getId().toString(), user.getUsername(), "ADMIN"));
+
+      return new SignInRes(token);
+    } catch (Exception e) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   @Override
@@ -64,8 +76,14 @@ public class AuthInternalServiceImpl implements AuthInternalService {
 
     userInternalService.createUser(new CreateUserReq(newUser.getId(), req.getName(), req.getAddress()));
 
-    return new SignUpRes(
-        "access token",
-        "refresh token");
+    // jwt
+    try {
+      var token = jwtService.createJwsToken(
+          new CreateJwsTokenReq(newUser.getId().toString(), newUser.getUsername(), "ADMIN"));
+
+      return new SignUpRes(token);
+    } catch (Exception e) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 }

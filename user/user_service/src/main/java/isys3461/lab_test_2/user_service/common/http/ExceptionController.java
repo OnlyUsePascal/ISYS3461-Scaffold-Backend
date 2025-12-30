@@ -2,6 +2,8 @@ package isys3461.lab_test_2.user_service.common.http;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,9 +17,14 @@ public class ExceptionController {
   @ExceptionHandler({ Exception.class, RuntimeException.class })
   public ResponseEntity<?> defaultException(Exception e) {
     e.printStackTrace();
-    return new ResponseEntity<>(new ExceptionDto(e.getMessage(),
-        HttpStatus.INTERNAL_SERVER_ERROR.value()),
-        HttpStatus.INTERNAL_SERVER_ERROR);
+
+    var code = (e instanceof AccessDeniedException)
+        ? HttpStatus.FORBIDDEN
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    return new ResponseEntity<>(
+        new ExceptionDto(e.getMessage(), code.value()),
+        code);
   }
 
   @ExceptionHandler(ResponseStatusException.class)

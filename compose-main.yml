@@ -62,7 +62,7 @@ services:
       - user-pg
       - kafka-1
     ports:
-      - "8082:8082"
+      - "8083:8083"
     networks:
       - isys3461_net
     env_file: .env

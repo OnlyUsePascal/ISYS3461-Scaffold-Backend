@@ -22,6 +22,6 @@ public class SignUpDto {
     private String address;
   }
 
-  public static record SignUpRes(String token, String refreshToken) {
+  public static record SignUpRes(String token) {
   };
 }
