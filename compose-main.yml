@@ -26,4 +26,29 @@ services:
       - POSTGRES_USER=ead_user
       - POSTGRES_PASSWORD=ead_pwd
 
-  
+  beta:
+    build:
+      context: ./beta
+    depends_on:
+      - eureka
+      - api-gateway
+      - beta-pg
+      - kafka-1
+    ports:
+      - "8082:8082"
+    networks:
+      - isys3461_net
+    env_file: .env
+    environment:
+      - POSTGRES_URI=jdbc:postgresql://beta-pg:5432/ead_db?user=ead_user&password=ead_pwd
+
+  beta-pg:
+    image: "postgres:17"
+    ports:
+      - "5443:5432"
+    networks:
+      - isys3461_net
+    environment:
+      - POSTGRES_DB=ead_db
+      - POSTGRES_USER=ead_user
+      - POSTGRES_PASSWORD=ead_pwd
