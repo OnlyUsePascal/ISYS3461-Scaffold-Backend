@@ -37,11 +37,27 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/alpha, /v3/api-docs
 
+        - id: beta
+          uri: lb://beta
+          predicates:
+            - Path=${server.servlet.context-path}/beta/**
+          filters:
+            - StripPrefix=2
+
+        - id: beta-docs
+          uri: lb://beta
+          predicates:
+            - Path=/v3/api-docs/beta
+          filters:
+            - RewritePath=/v3/api-docs/beta, /v3/api-docs
+
 springdoc:
   swagger-ui:
     urls:
       - name: alpha
         url: /v3/api-docs/alpha
+      - name: beta
+        url: /v3/api-docs/beta
 
 management:
   endpoint:
