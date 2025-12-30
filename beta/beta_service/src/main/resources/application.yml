@@ -1,0 +1,53 @@
+server:
+  port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URI}
+
+spring:
+  application:
+    name: beta
+  config:
+    import:
+      - optional:file:.env[.properties]
+  kafka:
+    bootstrap-servers:
+      - ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    consumer:
+      group-id: ${spring.application.name}-service
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+    properties:
+      spring.json.trusted.packages: "*"
+      spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+      spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  datasource:
+    url: ${POSTGRES_URI}
+    driver-class-name: org.postgresql.Driver
+
+key-store:
+  type: PKCS12
+  path: classpath:${KEYSTORE_FILENAME}
+  password: ${KEYSTORE_PWD}
+  alias:
+    jws: ${KEYSTORE_ALIAS_JWS}
+
+seed-data:
+  key: ${SEED_KEY:}
+
