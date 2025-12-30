@@ -11,6 +11,8 @@ import org.springframework.kafka.requestreply.RequestReplyFuture;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import isys3461.lab_test2.alpha_api.external.dto.alpha.AlphaTopicRegistry;
 import isys3461.lab_test2.alpha_api.external.dto.alpha.TestKafkaNotifyDto.TestKafkaNotifyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.BetaTopicRegistry;
@@ -28,27 +30,43 @@ public class EventProducerImpl implements EventProducer {
   @Autowired
   private ReplyingKafkaTemplate<String, Object, Object> replyingKafkaTemplate;
 
-  private Object sendAndReceive(String reqTopic, String resTopic, Object data) throws Exception {
-    ProducerRecord<String, Object> req = new ProducerRecord<>(reqTopic, data);
+  @Autowired
+  private ObjectMapper objectMapper;
+
+  private void send(String reqTopic, Object reqData) throws Exception {
+    var reqBytes = objectMapper.writeValueAsBytes(reqData);
+    kafkaTemplate.send(reqTopic, reqBytes);
+  }
+
+  private <T> T sendAndReceive(String reqTopic, String resTopic,
+      Object reqData, Class<T> resType) throws Exception {
+
+    byte[] reqBytes = objectMapper.writeValueAsBytes(reqData);
+    ProducerRecord<String, Object> req = new ProducerRecord<>(reqTopic, reqBytes);
     req.headers().add(KafkaHeaders.REPLY_TOPIC, resTopic.getBytes());
 
     RequestReplyFuture<String, Object, Object> replyFuture = replyingKafkaTemplate.sendAndReceive(req);
     ConsumerRecord<String, Object> res = replyFuture.get();
-    return res.value();
+    var resBytes = (byte[]) res.value();
+    return objectMapper.readValue(resBytes, resType);
   }
 
   @Override
   public void testKafkaNotify(TestKafkaNotifyReq req) {
     log.info("testKafkaNotify {}", req);
-    kafkaTemplate.send(AlphaTopicRegistry.TEST_NOTIFY, req);
+    try {
+      send(AlphaTopicRegistry.TEST_NOTIFY, req);
+    } catch (Exception e) {
+      log.error("testKafkaNotify error", e);
+    }
   }
 
   @Override
   public TestKafkaRequestReplyRes testKafkaRequestReply(TestKafkaRequestReplyReq req) {
     log.info("testKafkaRequestReply {}", req);
     try {
-      var res = (TestKafkaRequestReplyRes) sendAndReceive(
-          BetaTopicRegistry.TEST_REQUEST_REPLY_REQ, BetaTopicRegistry.TEST_REQUEST_REPLY_RES, req);
+      var res = sendAndReceive(BetaTopicRegistry.TEST_REQUEST_REPLY_REQ, BetaTopicRegistry.TEST_REQUEST_REPLY_RES,
+          req, TestKafkaRequestReplyRes.class);
       log.info("testKafkaRequestReply {}", res);
       return res;
 

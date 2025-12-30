@@ -17,7 +17,7 @@ spring:
       - ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
     consumer:
       group-id: ${spring.application.name}-service
       auto-offset-reset: latest
@@ -27,7 +27,7 @@ spring:
     properties:
       spring.json.trusted.packages: "*"
       spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
-      spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+      spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.ByteArrayDeserializer
 
   jpa:
     hibernate:
