@@ -41,6 +41,10 @@ spring:
     url: ${POSTGRES_URI}
     driver-class-name: org.postgresql.Driver
 
+  data:
+    redis:
+      url: ${REDIS_URI}
+
 key-store:
   type: PKCS12
   path: classpath:${KEYSTORE_FILENAME}
@@ -50,4 +54,3 @@ key-store:
 
 seed-data:
   key: ${SEED_KEY:}
-

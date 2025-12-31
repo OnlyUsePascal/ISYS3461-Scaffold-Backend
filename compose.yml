@@ -60,6 +60,18 @@ services:
     networks:
       - isys3461_net
 
+  redis-ui:
+    image: redis/redisinsight:2.70
+    depends_on:
+      - redis
+    ports:
+      - "5540:5540"
+    networks:
+      - isys3461_net
+    environment:
+      - RI_REDIS_HOST=redis
+      - RI_REDIS_PORT=6379
+
 networks:
   isys3461_net:
     driver: bridge

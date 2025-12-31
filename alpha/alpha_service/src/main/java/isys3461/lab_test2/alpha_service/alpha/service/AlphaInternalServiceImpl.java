@@ -1,5 +1,6 @@
 package isys3461.lab_test2.alpha_service.alpha.service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.UUID;
@@ -7,9 +8,12 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import isys3461.lab_test2.alpha_api.external.dto.alpha.TestKafkaNotifyDto.TestKafkaNotifyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.ListBetaByIdsDto.ListBetaByIdsReq;
@@ -27,6 +31,7 @@ import isys3461.lab_test2.alpha_api.internal.service.AlphaInternalService;
 import isys3461.lab_test2.alpha_service.alpha.model.AlphaModel;
 import isys3461.lab_test2.alpha_service.alpha.repo.AlphaRepo;
 import isys3461.lab_test2.alpha_service.alpha.repo.AlphaSpecification;
+import isys3461.lab_test2.alpha_service.common.util.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -38,6 +43,12 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
 
   @Autowired
   private EventProducer eventProducer;
+
+  @Autowired
+  private RedisTemplate<String, Object> redisTemplate;
+
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @Override
   public void testKafkaNotify(TestKafkaNotifyReq req) {
@@ -63,11 +74,25 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
 
   @Override
   public GetAlphaRes getAlpha(UUID id) {
+    var redisKey = RedisUtil.buildGetAlphaKey(id);
+    try {
+      var cached = redisTemplate.opsForValue().get(redisKey);
+      if (cached != null) {
+        log.info("found redis key:" + redisKey);
+        return (GetAlphaRes) cached;
+      }
+    } catch (Exception e) {
+      log.warn("Failed to read from cache: " + e.getMessage());
+    }
+
     var alpha = alphaRepo.findById(id)
         .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha not found with id " + id.toString()));
-
-    return new GetAlphaRes(id, alpha.getName(), alpha.getPrice());
+            () -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "alpha not found with id " + id.toString()));
+    var res = new GetAlphaRes(id, alpha.getName(), alpha.getPrice(), alpha.getCreatedAt());
+    redisTemplate.opsForValue().set(redisKey, res, Duration.ofMinutes(10));
+    return res;
   }
 
   @Override
@@ -108,7 +133,6 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
 
     if (req.name() != null) {
       alpha.setName(req.name());
-      ;
     }
 
     if (req.price() != null) {
@@ -116,6 +140,8 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
     }
 
     var newAlpha = alphaRepo.save(alpha);
+    var redisKey = RedisUtil.buildGetAlphaKey(id);
+    redisTemplate.delete(redisKey);
   }
 
   @Override
@@ -125,5 +151,7 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha not found with id " + id.toString()));
 
     alphaRepo.deleteById(id);
+    var redisKey = RedisUtil.buildGetAlphaKey(id);
+    redisTemplate.delete(redisKey);
   }
 }
