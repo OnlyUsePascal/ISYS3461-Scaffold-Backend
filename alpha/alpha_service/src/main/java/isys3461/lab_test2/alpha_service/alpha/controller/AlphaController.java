@@ -24,6 +24,7 @@ import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKaf
 import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyRes;
 import isys3461.lab_test2.alpha_api.internal.dto.CreateAlphaDto.CreateAlphaReq;
 import isys3461.lab_test2.alpha_api.internal.dto.GetAlphaDto.GetAlphaRes;
+import isys3461.lab_test2.alpha_api.internal.dto.GetAlphaWithBetaDto.GetAlphaWithBetaRes;
 import isys3461.lab_test2.alpha_api.internal.dto.ListAlphasDto.ListAlphasReq;
 import isys3461.lab_test2.alpha_api.internal.dto.ListAlphasDto.ListAlphasRes;
 import isys3461.lab_test2.alpha_api.internal.dto.UpdateAlphaDto.UpdateAlphaReq;
@@ -89,6 +90,12 @@ public class AlphaController {
   @GetMapping("/{id}")
   public ResponseEntity<GenericResponseDto<GetAlphaRes>> getAlpha(@PathVariable UUID id) {
     var res = alphaInternalService.getAlpha(id);
+    return GenericResponseDto.getGenericResponseDto(res);
+  }
+  
+  @GetMapping("/{id}/with-beta")
+  public ResponseEntity<GenericResponseDto<GetAlphaWithBetaRes>> getAlphaWithBeta(@PathVariable UUID id) {
+    var res = alphaInternalService.getAlphaWithBeta(id);
     return GenericResponseDto.getGenericResponseDto(res);
   }
 

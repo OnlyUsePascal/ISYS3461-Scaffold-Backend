@@ -5,11 +5,15 @@ import java.util.UUID;
 
 public class ListBetaByIdsDto {
   static public record ListBetaByIdsReq(
-    List<UUID> ids
-  ){};
+      List<UUID> ids) {
+  };
 
   static public record ListBetaByIdsResItem(
-    UUID id,
-    String name
-  ){};
+      UUID id,
+      String name) {
+  };
+
+  static public record ListBetaByIdsRes(
+      List<ListBetaByIdsResItem> items) {
+  };
 }

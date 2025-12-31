@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import isys3461.lab_test2.alpha_api.external.dto.alpha.AlphaTopicRegistry;
 import isys3461.lab_test2.alpha_api.external.dto.alpha.TestKafkaNotifyDto.TestKafkaNotifyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.BetaTopicRegistry;
+import isys3461.lab_test2.alpha_api.external.dto.beta.ListBetaByIdsDto.ListBetaByIdsReq;
+import isys3461.lab_test2.alpha_api.external.dto.beta.ListBetaByIdsDto.ListBetaByIdsRes;
 import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyRes;
 import isys3461.lab_test2.alpha_api.external.service.EventProducer;
@@ -73,6 +75,21 @@ public class EventProducerImpl implements EventProducer {
     } catch (Exception e) {
       log.error("testKafkaRequestReply: {}", e.getMessage());
       return new TestKafkaRequestReplyRes(0);
+    }
+  }
+
+  @Override
+  public ListBetaByIdsRes listBetaByIds(ListBetaByIdsReq req) {
+    log.info("listBetaByIds {}", req);
+    try {
+      var res = sendAndReceive(BetaTopicRegistry.LIST_REQ, BetaTopicRegistry.LIST_RES,
+          req, ListBetaByIdsRes.class);
+      log.info("listBetaByIds {}", res);
+      return res;
+
+    } catch (Exception e) {
+      log.error("listBetaByIds: {}", e.getMessage());
+      return new ListBetaByIdsRes(new ArrayList<>());
     }
   }
 }

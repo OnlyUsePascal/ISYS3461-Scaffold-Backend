@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import isys3461.lab_test_2.beta_api.external.dto.alpha.AlphaTopicRegistry;
 import isys3461.lab_test_2.beta_api.external.dto.alpha.TestKafkaNotifyDto.TestKafkaNotifyReq;
 import isys3461.lab_test_2.beta_api.external.dto.beta.BetaTopicRegistry;
+import isys3461.lab_test_2.beta_api.external.dto.beta.ListBetaByIdsDto.ListBetaByIdsReq;
 import isys3461.lab_test_2.beta_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyReq;
 import isys3461.lab_test_2.beta_api.external.service.BetaExternalService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,4 +48,19 @@ public class EventConsumerImpl {
       log.error("testKafkaNotify error", e);
     }
   }
+
+  @KafkaListener(topics = BetaTopicRegistry.LIST_REQ)
+  @SendTo(BetaTopicRegistry.LIST_RES)
+  public byte[] listBetaByIds(byte[] reqBytes) {
+    try {
+      var req = objectMapper.readValue(reqBytes, ListBetaByIdsReq.class);
+      log.info("listBetaByIds: {}", req);
+      var res = betaExternalService.listBetaByIds(req);
+      return objectMapper.writeValueAsBytes(res);
+    } catch (Exception e) {
+      log.error("listBetaByIds error", e);
+      return new byte[0];
+    }
+  }
+  
 }

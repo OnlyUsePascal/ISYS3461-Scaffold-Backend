@@ -30,6 +30,7 @@ public class KafkaConsumerConfig {
 
     ContainerProperties containerProperties = new ContainerProperties(
         BetaTopicRegistry.TEST_REQUEST_REPLY_RES,
+        BetaTopicRegistry.LIST_RES,
         "what");
 
     // Important: Optimize for single-reply usage
