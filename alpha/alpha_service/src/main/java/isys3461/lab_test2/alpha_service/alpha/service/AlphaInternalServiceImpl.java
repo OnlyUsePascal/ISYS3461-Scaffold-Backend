@@ -1,14 +1,29 @@
 package isys3461.lab_test2.alpha_service.alpha.service;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import isys3461.lab_test2.alpha_api.external.dto.alpha.TestKafkaNotifyDto.TestKafkaNotifyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyReq;
 import isys3461.lab_test2.alpha_api.external.dto.beta.TestKafkaReqResDto.TestKafkaRequestReplyRes;
 import isys3461.lab_test2.alpha_api.external.service.EventProducer;
+import isys3461.lab_test2.alpha_api.internal.dto.CreateAlphaDto.CreateAlphaReq;
+import isys3461.lab_test2.alpha_api.internal.dto.GetAlphaDto.GetAlphaRes;
+import isys3461.lab_test2.alpha_api.internal.dto.GetAlphaWithBetaDto.GetAlphaWithBetaRes;
+import isys3461.lab_test2.alpha_api.internal.dto.ListAlphasDto.ListAlphasReq;
+import isys3461.lab_test2.alpha_api.internal.dto.ListAlphasDto.ListAlphasRes;
+import isys3461.lab_test2.alpha_api.internal.dto.UpdateAlphaDto.UpdateAlphaReq;
 import isys3461.lab_test2.alpha_api.internal.service.AlphaInternalService;
+import isys3461.lab_test2.alpha_service.alpha.model.AlphaModel;
 import isys3461.lab_test2.alpha_service.alpha.repo.AlphaRepo;
+import isys3461.lab_test2.alpha_service.alpha.repo.AlphaSpecification;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -30,5 +45,71 @@ public class AlphaInternalServiceImpl implements AlphaInternalService {
   public TestKafkaRequestReplyRes testKafkaRequestReply(TestKafkaRequestReplyReq req) {
     var res = eventProducer.testKafkaRequestReply(req);
     return res;
+  }
+
+  @Override
+  public Page<ListAlphasRes> listAlphas(ListAlphasReq req) {
+    var pageable = PageRequest.of(req.pageNo() - 1, req.pageSz());
+    var alphas = alphaRepo.findAll(pageable);
+
+    var res = alphas.map(al -> {
+      return new ListAlphasRes(al.getId(), al.getName(), al.getPrice());
+    });
+    return res;
+  }
+
+  @Override
+  public GetAlphaRes getAlpha(UUID id) {
+    var alpha = alphaRepo.findById(id)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha not found with id " + id.toString()));
+
+    return new GetAlphaRes(id, alpha.getName(), alpha.getPrice());
+  }
+
+  @Override
+  public GetAlphaWithBetaRes getAlphaWithBeta(UUID id) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public UUID createAlpha(CreateAlphaReq req) {
+    var cond = AlphaSpecification.hasName(req.name());
+    var alpha_ = alphaRepo.findOne(cond);
+    if (alpha_.isPresent()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha already exist with name " + req.name());
+    }
+
+    var newAlpha = alphaRepo.save(new AlphaModel(
+        UUID.randomUUID(), req.name(), req.price(), LocalDateTime.now()));
+    return newAlpha.getId();
+  }
+
+  @Override
+  public void updateAlpha(UUID id, UpdateAlphaReq req) {
+    var alpha = alphaRepo.findById(id)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha not found with id " + id.toString()));
+
+    if (req.name() != null) {
+      alpha.setName(req.name());
+      ;
+    }
+
+    if (req.price() != null) {
+      alpha.setPrice(req.price());
+    }
+
+    var newAlpha = alphaRepo.save(alpha);
+  }
+
+  @Override
+  public void deleteAlpha(UUID id) {
+    var alpha = alphaRepo.findById(id)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "alpha not found with id " + id.toString()));
+
+    alphaRepo.deleteById(id);
   }
 }

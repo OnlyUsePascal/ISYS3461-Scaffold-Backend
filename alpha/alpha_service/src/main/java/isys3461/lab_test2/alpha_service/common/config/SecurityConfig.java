@@ -30,6 +30,7 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/", "/**").permitAll()
             .requestMatchers("/test/header", "/test/header-role").authenticated()
             .requestMatchers(HttpMethod.GET, "/", "/**").permitAll()
             .requestMatchers(

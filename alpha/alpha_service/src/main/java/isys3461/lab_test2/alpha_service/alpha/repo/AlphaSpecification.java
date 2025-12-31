@@ -11,6 +11,12 @@ public class AlphaSpecification {
     };
   }
 
+  static public Specification<AlphaModel> hasName(String name) {
+    return (root, query, criteriaBuilder) -> {
+      return criteriaBuilder.equal(root.get("name"), name);
+    };
+  }
+
   static public Specification<AlphaModel> orderBySomething(Specification<AlphaModel> spec) {
     return (root, query, criteriaBuilder) -> {
       query.orderBy(criteriaBuilder.desc(root.get("something")));

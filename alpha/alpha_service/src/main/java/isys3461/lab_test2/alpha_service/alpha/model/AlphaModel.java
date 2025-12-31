@@ -1,5 +1,6 @@
 package isys3461.lab_test2.alpha_service.alpha.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -25,4 +26,10 @@ public class AlphaModel {
   
   @Column(nullable = false, name = "name")
   private String name;
+
+  @Column(nullable = false, name = "price")
+  private Double price;
+
+  @Column(nullable = false, name = "created_at")
+  private LocalDateTime createdAt;
 }
